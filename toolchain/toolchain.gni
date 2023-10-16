@@ -24,12 +24,14 @@ if (is_mac) {
   shlib_extension = ".so"
 } else if (is_win) {
   shlib_extension = ".dll"
+} else if (is_emscripten) {
+  shlib_extension = ".wasm"
 } else {
   assert(false, "Platform not supported")
 }
 
 # Prefix for shared library files.
-if (is_posix) {
+if (is_posix || is_emscripten) {
   shlib_prefix = "lib"
 } else {
   shlib_prefix = ""

@@ -132,6 +132,9 @@ declare_args() {
 
   # Set to true when compiling with the Clang compiler.
   is_clang = false
+  
+  # Set to true when compiling with the Emscripten compiler.
+  is_emscripten = false
 
   # Allows the path to a custom target toolchain to be injected as a single
   # argument, and set as the default toolchain.
@@ -202,7 +205,14 @@ if (host_toolchain == "") {
 
 _default_toolchain = ""
 
-if (target_os == "android") {
+if (is_emscripten) {
+  _default_toolchain = "//build/toolchain/emscripten:emscripten"
+  target_cpu = "wasm"
+  target_os = "emscripten"
+  current_cpu = target_cpu
+  current_os = target_os
+}
+else if (target_os == "android") {
   if (is_clang) {
     _default_toolchain = "//build/toolchain/android:android_clang_$target_cpu"
   } else {
@@ -267,7 +277,7 @@ is_win = current_os == "win" || current_os == "winuwp"
 is_freebsd = current_os == "freebsd"
 
 is_apple = is_ios || is_mac
-is_posix = !is_win && !is_fuchsia
+is_posix = !is_win && !is_fuchsia && !is_emscripten
 
 # =============================================================================
 # TARGET DEFAULTS

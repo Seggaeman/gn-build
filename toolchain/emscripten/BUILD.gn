@@ -1,0 +1,144 @@
+import("//build/config/sanitizers/sanitizers.gni")
+import("//build/toolchain/cc_wrapper.gni")
+import("//build/toolchain/toolchain.gni")
+import("//build/toolchain/emscripten/emscripten.gni")
+
+toolchain("emscripten") {
+  cc = "$emscripten_base_path/emcc"
+  cxx = "$emscripten_base_path/em++"
+  ar = "$emscripten_base_path/emar"
+  nm = "$emscripten_base_path/emnm"
+  
+  if (host_os == "win") {
+    cc += ".bat"
+    cxx += ".bat"
+    ar += ".bat"
+    nm += ".bat"
+  }
+  ld = cxx
+  
+  # Generic compiler output path (they all produce object files)
+  # Use label_name instead of target_output_name since labels will generally
+  # have no spaces and will be unique in the directory.
+  object_path = "{{target_out_dir}}/{{label_name}}/{{source_name_part}}.o"
+
+  tool("cc") {
+    depfile = "{{output}}.d"
+    command = "$cc -MMD -MF $depfile {{defines}} {{include_dirs}} {{cflags}} {{cflags_c}} -c {{source}} -o {{output}}"
+    depsformat = "gcc"
+    precompiled_header_type = "gcc"
+    description = "CC {{output}}"
+    outputs = [
+      object_path,
+    ]
+  }
+  
+  tool("cxx") {
+    depfile = "{{output}}.d"
+    command = "$cxx -MMD -MF $depfile {{defines}} {{include_dirs}} {{cflags}} {{cflags_cc}} -c {{source}} -o {{output}}"
+    depsformat = "gcc"
+    precompiled_header_type = "gcc"
+    description = "CXX {{output}}"
+    outputs = [
+      object_path,
+    ]
+  }
+  
+  tool("asm") {
+    # For GCC we can just use the C compiler to compile assembly.
+    depfile = "{{output}}.d"
+    command = "$cc -MMD -MF $depfile {{defines}} {{include_dirs}} {{asmflags}} -c {{source}} -o {{output}}"
+    depsformat = "gcc"
+    description = "ASM {{output}}"
+    outputs = [
+      object_path,
+    ]
+  }  
+  
+  tool("alink") {
+    rspfile = "{{output}}.rsp"
+    rspfile_content = "{{inputs}}"
+    alink_command = "$ar {{arflags}} rcsD {{output}} @\"$rspfile\""
+    alink_wrapper = rebase_path("//build/toolchain/emscripten/emscripten_link_wrapper.py", root_build_dir)
+    command = "$python_path \"$alink_wrapper\" $alink_command"
+
+    description = "AR {{output}}"
+    outputs = [
+      "{{output_dir}}/{{target_output_name}}{{output_extension}}",
+    ]
+
+    # Shared libraries go in the target out directory by default so we can
+    # generate different targets with the same name and not have them collide.
+    default_output_dir = "{{target_out_dir}}"
+    default_output_extension = ".a"
+    output_prefix = "lib"
+  }
+  
+  tool("solink") {
+    soname = "{{target_output_name}}{{output_extension}}"  # e.g. "libfoo.wasm".
+    sofile = "{{output_dir}}/$soname"  # Possibly including toolchain dir.
+    rspfile = sofile + ".rsp"
+    pool = "//build/toolchain:link_pool($default_toolchain)"
+
+    solink_command = "$ld {{ldflags}} -o \"$sofile\" @\"$rspfile\""
+    solink_wrapper = rebase_path("//build/toolchain/emscripten/emscripten_link_wrapper.py", root_build_dir)
+    command = "$python_path \"$solink_wrapper\" $solink_command"
+
+    rspfile_content = "{{inputs}} {{solibs}} {{libs}}"
+
+    description = "SOLINK $sofile"
+
+    # Use this for {{output_extension}} expansions unless a target manually
+    # overrides it (in which case {{output_extension}} will be what the target
+    # specifies).
+    default_output_extension = shlib_extension
+    default_output_dir = "{{root_out_dir}}"
+    output_prefix = "lib"
+
+    outputs = [
+      sofile,
+      "{{output_dir}}/{{target_output_name}}.d.ts"
+    ]
+  }
+   
+  tool("link") {
+    exename = "{{target_output_name}}{{output_extension}}"
+    outfile = "{{output_dir}}/$exename"
+    rspfile = "$outfile.rsp"
+    pool = "//build/toolchain:link_pool($default_toolchain)"
+
+    # Use this for {{output_extension}} expansions unless a target manually
+    # overrides it (in which case {{output_extension}} will be what the target
+    # specifies).
+    default_output_extension = ".js"
+
+    default_output_dir = "{{root_out_dir}}"
+
+    link_command = "$ld {{ldflags}} -o \"$outfile\" @\"$rspfile\""
+    link_wrapper = rebase_path("//build/toolchain/emscripten/emscripten_link_wrapper.py", root_build_dir)
+    command = "$python_path \"$link_wrapper\" $link_command"
+
+    description = "LINK $outfile"
+    rspfile_content = "{{inputs}} {{solibs}} {{libs}}"
+
+    outputs = [
+      outfile,
+    ]
+  }
+  
+  # These two are really entirely generic, but have to be repeated in
+  # each toolchain because GN doesn't allow a template to be used here.
+  # See //build/toolchain/toolchain.gni for details.
+  tool("stamp") {
+    command = stamp_command
+    description = stamp_description
+  }
+  tool("copy") {
+    command = copy_command
+    description = copy_description
+  }
+
+  tool("action") {
+    pool = "//build/toolchain:action_pool($default_toolchain)"
+  }
+}

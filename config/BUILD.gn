@@ -138,6 +138,8 @@ config("compiler") {
     configs += [ "//build/config/android:compiler" ]
   } else if (is_ios || is_mac) {
     configs += [ "//build/config/mac:compiler" ]
+  } else if (is_emscripten) {
+    configs += [ "//build/config/emscripten:compiler" ]
   }
 
   # Applies to all Posix systems.
@@ -169,7 +171,7 @@ config("compiler") {
     }
 
     # Linker warnings.
-    if (fatal_linker_warnings && !is_mac && !is_ios && !is_freebsd) {
+    if (fatal_linker_warnings && !is_mac && !is_ios && !is_freebsd && !is_emscripten) {
       ldflags += [ "-Wl,--fatal-warnings" ]
     }
   }
@@ -781,6 +783,8 @@ config("runtime_library") {
     configs += [ "//build/config/mac:runtime_library" ]
   } else if (is_android) {
     configs += [ "//build/config/android:runtime_library" ]
+  } else if (is_emscripten) {
+    configs += [ "//build/config/emscripten:runtime_library" ]
   }
 
   if (is_posix) {
@@ -1392,6 +1396,8 @@ config("executable_config") {
     if (is_android) {
       configs += [ "//build/config/android:executable_config" ]
     }
+  } else if (is_emscripten) {
+    configs += [ "//build/config/emscripten:executable_ldconfig" ]
   }
 }
 
@@ -1407,5 +1413,7 @@ config("shared_library_config") {
     configs += [ "//build/config/mac:mac_dynamic_flags" ]
   } else if (is_ios) {
     configs += [ "//build/config/ios:ios_dynamic_flags" ]
+  } else if (is_emscripten) {
+    configs += [ "//build/config/emscripten:shared_library_ldconfig" ]
   }
 }

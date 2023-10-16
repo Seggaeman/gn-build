@@ -1,0 +1,41 @@
+import("//build/config/sanitizers/sanitizers.gni")
+import("//build/toolchain/sysroot.gni")
+import("//build/toolchain/emscripten/emscripten.gni")
+
+assert(is_emscripten)
+
+# This is included by reference in the //build/config/compiler config that
+# is applied to all targets. It is here to separate out the logic that is
+# emscripten-only.
+config("compiler") {
+  cflags = [ "-std=c++2a" ]
+  defines = [ "EMSCRIPTEN" ]
+  ldflags = [ "-lembind" ]
+}
+
+# This is included by reference in the //build/config/compiler:runtime_library
+# config that is applied to all targets. It is here to separate out the logic
+# that is emscripten-only. Please see that target for advice on what should go in
+# :runtime_library vs. :compiler.
+config("runtime_library") {
+}
+
+# Settings for executables.
+config("executable_ldconfig") {
+  ldflags = [ "-sEXPORTED_FUNCTIONS=['_malloc','_free']" ]
+}
+
+# Settings for shared libraries.
+config("shared_library_ldconfig") {
+  ldflags = [ "-fPIC" ]
+}
+
+#settings for main module
+config("main_module_ldconfig") {
+  ldflags = [ "-sMAIN_MODULE=2" ]
+}
+
+#settings for side module
+config("side_module_ldconfig") {
+  ldflags = [ "-sSIDE_MODULE=2" ]
+}

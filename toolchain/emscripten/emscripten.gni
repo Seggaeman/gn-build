@@ -1,0 +1,18 @@
+# Copyright 2015 The Chromium Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+# Toolchain-related configuration that may be needed outside the context of the
+# toolchain() rules themselves.
+
+declare_args() {
+  # The path of the folder containing the emscripten compiler toolchain.
+  emscripten_base_path = getenv("EMSDK")
+  # The path of the folder containing npm
+  emscripten_node_path = ""
+}
+
+if (is_win && is_emscripten) {
+  assert(emscripten_base_path != "" && emscripten_node_path != "",
+         "You must set emscripten_base_path and emscripten_node_path when using Emscripten on Windows")
+}
