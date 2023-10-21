@@ -30,7 +30,7 @@ declare_args() {
 
 # If the user didn't specify the compiler version, attempt to autodetect it.
 
-if (gcc_version == 0 && !is_clang && !is_win && !is_emscripten) {
+if (gcc_version == 0 && !is_clang && !is_win && !is_emscripten && !is_typescript) {
   if (is_android) {
     # sync with //build/toolchain/android/BUILD.gn
     import("//build/toolchain/android/settings.gni")

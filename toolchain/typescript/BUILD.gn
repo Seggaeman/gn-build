@@ -1,0 +1,77 @@
+import("//build/config/sanitizers/sanitizers.gni")
+import("//build/toolchain/cc_wrapper.gni")
+import("//build/toolchain/toolchain.gni")
+import("//build/toolchain/emscripten/emscripten.gni")
+
+toolchain("typescript") {
+  toolchain_args = {
+    current_cpu = "javascript"
+    current_os = "browser"
+  }
+  tsc_path = "$emscripten_node_path/tsc"
+  if (host_os == "win") {
+      tsc_path += ".cmd"
+  }
+
+  tool("cc") {
+    command = "cc"
+    outputs = [ "/not_a_file1" ]
+  }
+  
+  tool("cxx") {
+    command = "cxx"
+    outputs = [ "/not_a_file2" ]
+  }
+  
+  tool("asm") {
+    command = "asm"
+    outputs = [ "/not_a_file3" ]
+  }  
+  
+  tool("alink") {
+    command = "alink"
+    outputs = [ "/not_a_file4" ]
+  }
+  
+  tool("solink") {
+    command = "solink"
+    outputs = [ "/not_a_file5" ]
+  }
+   
+  tool("link") {
+    exename = "{{target_output_name}}{{output_extension}}"
+    outfile = "{{output_dir}}/$exename"
+    pool = "//build/toolchain:link_pool($default_toolchain)"   
+
+    # Use this for {{output_extension}} expansions unless a target manually
+    # overrides it (in which case {{output_extension}} will be what the target
+    # specifies).
+    default_output_extension = ".log"
+
+    default_output_dir = "{{root_out_dir}}"
+
+    link_command = "{{ldflags}} " + outfile
+    link_wrapper = rebase_path("//build/toolchain/typescript/typescript_link_wrapper.py", root_build_dir)
+    command = "$python_path \"$link_wrapper\" $link_command"
+
+    description = "LINK {{label}}"
+
+    outputs = [ outfile, ]
+  }
+  
+  # These two are really entirely generic, but have to be repeated in
+  # each toolchain because GN doesn't allow a template to be used here.
+  # See //build/toolchain/toolchain.gni for details.
+  tool("stamp") {
+    command = stamp_command
+    description = stamp_description
+  }
+  tool("copy") {
+    command = copy_command
+    description = copy_description
+  }
+
+  tool("action") {
+    pool = "//build/toolchain:action_pool($default_toolchain)"
+  }
+}

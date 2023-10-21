@@ -4,6 +4,11 @@ import("//build/toolchain/toolchain.gni")
 import("//build/toolchain/emscripten/emscripten.gni")
 
 toolchain("emscripten") {
+  toolchain_args = {
+    current_cpu = "wasm"
+    current_os = "browser"
+  }
+
   cc = "$emscripten_base_path/emcc"
   cxx = "$emscripten_base_path/em++"
   ar = "$emscripten_base_path/emar"

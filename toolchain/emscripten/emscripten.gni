@@ -12,7 +12,5 @@ declare_args() {
   emscripten_node_path = ""
 }
 
-if (is_win && is_emscripten) {
-  assert(emscripten_base_path != "" && emscripten_node_path != "",
-         "You must set emscripten_base_path and emscripten_node_path when using Emscripten on Windows")
-}
+assert(emscripten_base_path != "" && emscripten_node_path != "",
+         "You must set emscripten_base_path and emscripten_node_path when using Emscripten")

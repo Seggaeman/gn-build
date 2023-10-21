@@ -171,7 +171,7 @@ config("compiler") {
     }
 
     # Linker warnings.
-    if (fatal_linker_warnings && !is_mac && !is_ios && !is_freebsd && !is_emscripten) {
+    if (fatal_linker_warnings && !is_mac && !is_ios && !is_freebsd && !is_emscripten && !is_typescript) {
       ldflags += [ "-Wl,--fatal-warnings" ]
     }
   }
@@ -1028,6 +1028,9 @@ config("no_optimize") {
       # traces on Windows ARM64 rely on it.
       cflags += [ "/Oy-" ]
     }
+  } else if(is_emscripten) {
+    cflags = [ "-O3" ]
+    ldflags = ["-g" ]
   } else {
     cflags = [ "-O0" ]
     ldflags = []
@@ -1238,6 +1241,8 @@ config("symbols") {
         "-gdwarf-3",
         "-g2",
       ]
+    } else if (is_emscripten) {
+      cflags = [ "-g" ]
     } else {
       cflags = [ "-g2" ]
     }

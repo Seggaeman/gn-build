@@ -9,7 +9,7 @@ assert(is_emscripten)
 # emscripten-only.
 config("compiler") {
   cflags = [ "-std=c++2a" ]
-  defines = [ "EMSCRIPTEN" ]
+  defines = [ "__EMSCRIPTEN__" ]
   ldflags = [ "-lembind" ]
 }
 
@@ -30,12 +30,17 @@ config("shared_library_ldconfig") {
   ldflags = [ "-fPIC" ]
 }
 
-#settings for main module
+# Settings for main module
 config("main_module_ldconfig") {
   ldflags = [ "-sMAIN_MODULE=2" ]
 }
 
-#settings for side module
+# Settings for side module
 config("side_module_ldconfig") {
   ldflags = [ "-sSIDE_MODULE=2" ]
+}
+
+# Settings for fetch API
+config("fetch_ldconfig") {
+  ldflags = ["-sFETCH" ]
 }
