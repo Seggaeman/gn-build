@@ -8,7 +8,7 @@ assert(is_emscripten)
 # is applied to all targets. It is here to separate out the logic that is
 # emscripten-only.
 config("compiler") {
-  cflags = [ "-std=c++2a" ]
+  cflags = [ "-fms-extensions" ]
   defines = [ "__EMSCRIPTEN__" ]
   ldflags = [ "-lembind" ]
 }
@@ -43,4 +43,9 @@ config("side_module_ldconfig") {
 # Settings for fetch API
 config("fetch_ldconfig") {
   ldflags = ["-sFETCH" ]
+}
+
+# Settings for extra functions
+config("exported_runtime_ldconfig") {
+  ldflags = [ "-sEXPORTED_RUNTIME_METHODS=['ccall','UTF8ToString']" ]
 }
