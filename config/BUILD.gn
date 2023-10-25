@@ -171,7 +171,7 @@ config("compiler") {
     }
 
     # Linker warnings.
-    if (fatal_linker_warnings && !is_mac && !is_ios && !is_freebsd && !is_emscripten && !is_typescript) {
+    if (fatal_linker_warnings && !is_mac && !is_ios && !is_freebsd && !is_emscripten) {
       ldflags += [ "-Wl,--fatal-warnings" ]
     }
   }

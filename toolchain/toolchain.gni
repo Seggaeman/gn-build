@@ -26,8 +26,6 @@ if (is_mac) {
   shlib_extension = ".dll"
 } else if (is_emscripten) {
   shlib_extension = ".wasm"
-} else if (is_typescript) {
-  shlib_extension = ".js"
 } else {
   assert(false, "Platform not supported")
 }

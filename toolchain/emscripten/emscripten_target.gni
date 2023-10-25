@@ -12,10 +12,7 @@ template("typescript_target") {
         args = [ "$tsc_path", "--target", "es5", "--module", "CommonJS", "--esModuleInterop", "true", "--forceConsistentCasingInFileNames", "true", "--outDir", rebase_path(typescript_output_directory)] + rebase_path(sources)
         outputs = []
         foreach(source_file, sources) {
-            #output_file = rebase_path(source_file, "", invoker.typescript_output_directory)
             output_file = string_replace(source_file, ".ts", ".js")
-            #print("output_file is $output_file")
-            #print("$typescript_output_directory/$output_file")
             outputs += [ "$typescript_output_directory/$output_file" ]
         }
     }
@@ -51,6 +48,9 @@ template("emscripten_target")
         if (!defined(deps)) {
             deps = []
         }
+        if(!defined(inputs)) {
+            inputs = []
+        }
         if(!defined(ldflags)) {
             ldflags = []
         }
@@ -74,6 +74,7 @@ template("emscripten_target")
                 ldflags += ["--js-library", string_replace(output_file, ".ts", ".js")]           
             }
             deps += [ ":typescript_merge_compile_$base_target_name" ]
+            inputs += typescript_merge_sources
         }
         
         # emar doesn't support --embind-emit-tsd
@@ -81,26 +82,11 @@ template("emscripten_target")
             defines += [ string_to_upper(base_target_name) + "_STATIC" ]
         } else {
             ldflags += ["--embind-emit-tsd", rebase_path(root_build_dir) + "/${base_target_name}.d.ts"]
-        }
-        #if(defined(typescript_sources)) {
-        #    data += typescript_sources
-        #    tsc_path = "$emscripten_node_path/tsc"
-        #    if (host_os == "win") {
-        #        tsc_path += ".cmd"
-        #    }
-        #    typescript_command_line = [ "--typescript_compile_start" ] + [ "$tsc_path", "--target", "es5", "--module", "CommonJS", "--esModuleInterop", "true", "--forceConsistentCasingInFileNames", "true", "--outDir", rebase_path(root_build_dir)] + rebase_path(typescript_sources, root_build_dir) + ["--typescript_compile_end"]      
-        #    if (emscripten_target_type == "static_library") {
-        #        arflags += typescript_command_line
-        #    } else {
-        #        ldflags += typescript_command_line
-        #    }
-        #}       
+        }    
     }
 
     if(defined(invoker.typescript_sources)) {
-        #print(":$base_target_name")
         typescript_target("typescript_compile_$base_target_name") {
-            #print("target is typescript_compile_$base_target_name")
             typescript_output_directory = root_out_dir
             sources = invoker.typescript_sources
             deps = [":$base_target_name"]
