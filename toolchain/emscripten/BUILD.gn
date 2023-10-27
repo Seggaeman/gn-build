@@ -102,7 +102,7 @@ toolchain("emscripten") {
 
     outputs = [
       sofile,
-      "{{output_dir}}/{{target_output_name}}.d.ts"
+      "{{output_dir}}/{{target_output_name}}.worker.js"
     ]
   }
    
@@ -128,7 +128,7 @@ toolchain("emscripten") {
 
     outputs = [
       outfile,
-      "{{output_dir}}/{{target_output_name}}.d.ts"
+      "{{output_dir}}/{{target_output_name}}.worker.js"
     ]
   }
   
