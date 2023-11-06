@@ -1,15 +1,16 @@
 import("//build/toolchain/emscripten/emscripten.gni")
 
 template("typescript_target") {
-    tsc_path = "$emscripten_node_path/tsc"
+    npx_path = "$emscripten_node_path/npx"
     if (host_os == "win") {
-        tsc_path += ".cmd"
+        npx_path += ".cmd"
     }
 
     action(target_name) {
+        target_dir = get_label_info(target_name, "dir") 
         forward_variables_from(invoker, ["sources", "typescript_output_directory", "deps"])
         script = "//build/toolchain/emscripten/typescript_compile.py"
-        args = [ "$tsc_path", "--target", "esnext", "--module", "CommonJS", "--esModuleInterop", "true", "--forceConsistentCasingInFileNames", "true", "--outDir", rebase_path(typescript_output_directory)] + rebase_path(sources)
+        args = [ rebase_path(target_dir), "$npx_path", "webpack" ]
         outputs = []
         foreach(source_file, sources) {
             output_file = string_replace(source_file, ".ts", ".js")
@@ -25,22 +26,22 @@ template("emscripten_target")
 
     base_target_name = target_name
 
-    if (defined(invoker.html_sources)) {
-        copy("copy_html_sources_$base_target_name") {
-            sources = invoker.html_sources
-            outputs = [ "$root_out_dir/{{source_target_relative}}" ]
-        }
+    typescript_all_sources = []
+    if (defined(invoker.typescript_sources)) {
+        typescript_all_sources += invoker.typescript_sources
     }
-
-    if(defined(invoker.typescript_merge_sources)) {
-        typescript_target("typescript_merge_compile_$base_target_name") {
-            typescript_output_directory = target_out_dir
-            sources = invoker.typescript_merge_sources
+    if (defined(invoker.typescript_merge_sources)) {
+        typescript_all_sources += invoker.typescript_merge_sources
+    }
+    if(typescript_all_sources != []) {
+        typescript_target("typescript_compile_$base_target_name") {
+            typescript_output_directory = root_out_dir
+            sources = typescript_all_sources
         }
     }
 
     target(invoker.emscripten_target_type, base_target_name) {
-        forward_variables_from(invoker, "*", [ "typescript_sources" ])
+        forward_variables_from(invoker, "*")
 
         if (!defined(defines)) {
             defines = []
@@ -51,6 +52,7 @@ template("emscripten_target")
         if(!defined(inputs)) {
             inputs = []
         }
+        inputs += typescript_all_sources
         if(!defined(ldflags)) {
             ldflags = []
         }
@@ -64,30 +66,19 @@ template("emscripten_target")
             }
         }
 
-        if(defined(html_sources)) {
-            deps += [ ":copy_html_sources_$target_name" ]
+        if(typescript_all_sources != []) {
+            deps += [ ":typescript_compile_$base_target_name" ]
         }
-
         if (defined(typescript_merge_sources)) {
             foreach(merge_source, typescript_merge_sources) {
-                output_file = rebase_path(merge_source, "", target_out_dir)
+                output_file = rebase_path(merge_source, "", root_out_dir)
                 ldflags += ["--js-library", string_replace(output_file, ".ts", ".js")]           
             }
-            deps += [ ":typescript_merge_compile_$base_target_name" ]
-            inputs += typescript_merge_sources
         }
         
         # emar doesn't support --embind-emit-tsd
         if(emscripten_target_type == "static_library") {
             defines += [ string_to_upper(base_target_name) + "_STATIC" ]
         } 
-    }
-
-    if(defined(invoker.typescript_sources)) {
-        typescript_target("typescript_compile_$base_target_name") {
-            typescript_output_directory = root_out_dir
-            sources = invoker.typescript_sources
-            deps = [":$base_target_name"]
-        }
-    }   
+    }  
 }
