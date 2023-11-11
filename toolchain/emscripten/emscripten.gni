@@ -8,9 +8,7 @@
 declare_args() {
   # The path of the folder containing the emscripten compiler toolchain.
   emscripten_base_path = getenv("EMSDK")
-  # The path of the folder containing npm
-  emscripten_node_path = ""
 }
 
-assert(emscripten_base_path != "" && emscripten_node_path != "",
-         "You must set emscripten_base_path and emscripten_node_path when using Emscripten")
+assert(emscripten_base_path != "",
+         "You must set emscripten_base_path when using Emscripten")
