@@ -2,7 +2,10 @@ import("//build/config/sanitizers/sanitizers.gni")
 import("//build/toolchain/sysroot.gni")
 import("//build/toolchain/emscripten/emscripten.gni")
 
-assert(is_emscripten)
+declare_args() {
+  pthread_pool_size = 1
+}
+assert(is_emscripten && pthread_pool_size > 0)
 
 # This is included by reference in the //build/config/compiler config that
 # is applied to all targets. It is here to separate out the logic that is
@@ -11,7 +14,7 @@ config("compiler") {
   #Enable pthread by default -pthread is synonymous with -sUSE_PTHREADS=1
   cflags = [ "-fms-extensions", "-pthread" ]
   defines = [ "__EMSCRIPTEN__" ]
-  ldflags = [ "-lembind", "-pthread", "-sPTHREAD_POOL_SIZE=4" ]
+  ldflags = [ "-lembind", "-pthread", "-sPTHREAD_POOL_SIZE=$pthread_pool_size" ]
 }
 
 # This is included by reference in the //build/config/compiler:runtime_library
