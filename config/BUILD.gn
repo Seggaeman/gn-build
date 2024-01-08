@@ -879,6 +879,9 @@ config("exceptions") {
     cflags_cc = [ "/EHsc" ]
   } else {
     cflags_cc = [ "-fexceptions" ]
+    if (is_emscripten) {
+      ldflags = [ "-fexceptions" ]
+    }
   }
 }
 
