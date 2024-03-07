@@ -12,7 +12,8 @@ assert(is_emscripten && pthread_pool_size > 0)
 # emscripten-only.
 config("compiler") {
   #Enable pthread by default -pthread is synonymous with -sUSE_PTHREADS=1
-  cflags = [ "-fms-extensions", "-pthread" ]
+  #Do not add -fms-extensions flag to avoid _WIN32 define hint that breaks vscode intellisense
+  cflags = [ "-pthread" ]
   defines = [ "__EMSCRIPTEN__" ]
   ldflags = [ "-lembind", "-pthread", "-sPTHREAD_POOL_SIZE=$pthread_pool_size", "-sEXPORTED_FUNCTIONS=['_malloc','_free']" ]
 }
