@@ -5,17 +5,22 @@ import("//build/toolchain/emscripten/emscripten.gni")
 declare_args() {
   pthread_pool_size = 1
 }
-assert(is_emscripten && pthread_pool_size > 0)
+assert(is_emscripten && pthread_pool_size >= 0)
 
 # This is included by reference in the //build/config/compiler config that
 # is applied to all targets. It is here to separate out the logic that is
 # emscripten-only.
 config("compiler") {
-  #Enable pthread by default -pthread is synonymous with -sUSE_PTHREADS=1
   #Do not add -fms-extensions flag to avoid _WIN32 define hint that breaks vscode intellisense
-  cflags = [ "-pthread" ]
+  cflags = []
   defines = [ "__EMSCRIPTEN__" ]
-  ldflags = [ "-lembind", "-pthread", "-sPTHREAD_POOL_SIZE=$pthread_pool_size", "-sEXPORTED_FUNCTIONS=['_malloc','_free']" ]
+  ldflags = [ "-lembind" ]
+
+  if (pthread_pool_size > 0) {
+    cflags += [ "-pthread" ]
+    ldflags += [ "-sPTHREAD_POOL_SIZE=$pthread_pool_size" ]
+  }
+  #ldflags = [ "-lembind", "-pthread", "-sPTHREAD_POOL_SIZE=$pthread_pool_size", "-sEXPORTED_FUNCTIONS=['_malloc','_free']" ]
 }
 
 # This is included by reference in the //build/config/compiler:runtime_library
@@ -27,7 +32,7 @@ config("runtime_library") {
 
 # Settings for executables.
 config("executable_ldconfig") {
-  ldflags = [ "-sEXPORTED_FUNCTIONS=['_main']" ]
+  #ldflags = [ "-sEXPORTED_FUNCTIONS=['_main']" ]
 }
 
 # Settings for shared libraries.
