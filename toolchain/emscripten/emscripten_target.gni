@@ -42,6 +42,18 @@ template("emscripten_target")
             }
         }
 
+        if(defined(javascript_preloads)) {
+            foreach(javascript_preload, javascript_preloads) {
+                ldflags += ["--pre-js", rebase_path(javascript_preload)]
+            }
+        }
+
+        if(defined(javascript_postloads)) {
+            foreach(javascript_postload, javascript_postloads) {
+                ldflags += ["--post-js", rebase_path(javascript_postload)]
+            }
+        }
+
         if(defined(javascript_libraries)) {
             foreach(javascript_library, javascript_libraries) {
                 ldflags += ["--js-library", rebase_path(javascript_library)]
