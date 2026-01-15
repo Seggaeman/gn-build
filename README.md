@@ -6,13 +6,10 @@ This project provides a work-in-progress standalone version of the toolchains an
 
 The toolchains have been tested on the following platforms:
 
-* Windows (MSVC 2013/2015/2017/2019, Clang 3.8)
+* Windows (MSVC 2013/2015/2017/2019/2022, Clang 3.8 - 17.0)
 * FreeBSD (GCC 6, Clang 11)
 * Linux (GCC 6, Clang 3.8)
 * OS X (Xcode 7.3.1)
-
-[![Build Status](https://travis-ci.org/timniederhausen/gn-build.svg?branch=master)](https://travis-ci.org/timniederhausen/gn-build)
-[![Build status](https://ci.appveyor.com/api/projects/status/jpot0c7wp6e78lkk/branch/master?svg=true)](https://ci.appveyor.com/project/timniederhausen/gn-build)
 
 The [testsrc](https://github.com/timniederhausen/gn-build/tree/testsrc)
 branch contains the test/example project used by the CI tests.
