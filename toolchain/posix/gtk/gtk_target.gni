@@ -1,0 +1,41 @@
+
+template("gtk_target") {
+  if(!defined(invoker.target_type)) {
+    invoker.target_type = "executable"
+  }
+
+  if (defined(invoker.gresources) && len(invoker.gresources) > 0 ) {
+    if(!defined(invoker.gresource_compile_mode)) {
+      print("gresources_compile_mode is not defined. Forcing to \"c\".")
+      invoker.gresources_compile_mode = "c"
+    }
+  } else {
+    invoker.gresources_compile_mode = ""
+  }
+
+  if (invoker.gresources_compile_mode == "c") {
+    action_foreach("gresources_compile") {
+      sources = invoker.gresources
+      if (defined(invoker.gresources_ui)) {
+        inputs = invoker.gresources_ui
+      }
+      #depfile = "$target_gen_dir/{{source_target_relative}}.d"
+      script = "//build/toolchain/posix/gtk/gresources_compile.py"
+      args = [ rebase_path("./"), "{{source_target_relative}}", rebase_path(target_gen_dir) ]
+      outputs = [ "$target_gen_dir/{{source_target_relative}}.c" ]
+    }
+  }
+
+  target(invoker.target_type, target_name) {
+    forward_variables_from(invoker, "*", [ "gresources", "gresources_compile_mode", "gresources_ui", "target_type" ])
+    configs += [ "//build/config/posix/pkg-config:gtkmm-4.0" ]
+
+    if (invoker.gresources_compile_mode == "c") {
+      if (!defined(deps)) {
+        deps = []
+      }
+      deps += [ ":gresources_compile" ]
+      sources += get_target_outputs(":gresources_compile")
+    }
+  }
+}
