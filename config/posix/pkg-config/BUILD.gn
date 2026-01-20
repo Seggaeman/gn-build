@@ -1,0 +1,13 @@
+config("gtk4") {
+  cflags_and_libs = exec_script("pkg-config.py", ["gtk4"], "json")
+  cflags = cflags_and_libs.cflags
+  #Prefer libs instead of ldflags if these must be passed to dependents
+  libs = cflags_and_libs.libs
+}
+
+config("gtkmm-4.0") {
+  cflags_and_libs = exec_script("pkg-config.py", ["gtkmm-4.0"], "json")
+  cflags = cflags_and_libs.cflags
+  #Prefer libs instead of ldflags if these must be passed to dependents
+  libs = cflags_and_libs.libs
+}
