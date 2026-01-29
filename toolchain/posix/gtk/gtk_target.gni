@@ -25,17 +25,39 @@ template("gtk_target") {
       outputs = [ "$target_gen_dir/{{source_target_relative}}.c" ]
     }
   }
+  
+  if (defined(invoker.vala_sources) && len(invoker.vala_sources) > 0) {
+    action("vala_compile") {
+      sources = invoker.vala_sources
+      script_executable = "valac"
+      args = [ "--pkg", "gtk4", "-C", "--basedir", rebase_path("./"), "--directory", rebase_path(target_gen_dir) ]
+      outputs = []
+      foreach (source, sources) {
+        gen_file_path = target_gen_dir + "/" + get_path_info(source,"dir") + "/" + get_path_info(source, "name") + ".c"
+        args += [ rebase_path(source, root_out_dir) ]
+        outputs += [ gen_file_path ]
+      }
+    }
+  }
 
   target(invoker.target_type, target_name) {
     forward_variables_from(invoker, "*", [ "gresources", "gresources_compile_mode", "gresources_ui", "target_type" ])
     configs += [ "//build/config/posix/pkg-config:gtkmm-4.0" ]
+    if (!defined(deps)) {
+      deps = []
+    }
 
+    if (!defined(sources)) {
+      sources = []
+    }
     if (invoker.gresources_compile_mode == "c") {
-      if (!defined(deps)) {
-        deps = []
-      }
       deps += [ ":gresources_compile" ]
       sources += get_target_outputs(":gresources_compile")
+    }
+
+    if (defined(invoker.vala_sources) && len(invoker.vala_sources) > 0) {
+      deps += [ ":vala_compile" ]
+      sources += get_target_outputs(":vala_compile")
     }
   }
 }
