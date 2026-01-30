@@ -4,6 +4,20 @@ template("gtk_target") {
     invoker.target_type = "executable"
   }
 
+  if(defined(invoker.packages)) {
+    foreach(package, invoker.packages) {
+      config(package) {
+        cflags_and_libs = exec_script("//build/config/posix/pkg-config/pkg-config.py", [ package ], "json")
+        cflags = cflags_and_libs.cflags
+        #Prefer libs instead of ldflags if these must be passed to dependents
+        libs = cflags_and_libs.libs
+        if (len(cflags_and_libs.error) > 0) {
+          print(cflags_and_libs.error)
+          assert(len(cflags_and_libs.error) == 0)
+        }
+      }
+    }
+  }
   if (defined(invoker.gresources) && len(invoker.gresources) > 0 ) {
     if(!defined(invoker.gresource_compile_mode)) {
       print("gresources_compile_mode is not defined. Forcing to \"c\".")
@@ -41,8 +55,13 @@ template("gtk_target") {
   }
 
   target(invoker.target_type, target_name) {
-    forward_variables_from(invoker, "*", [ "gresources", "gresources_compile_mode", "gresources_ui", "target_type" ])
-    configs += [ "//build/config/posix/pkg-config:gtkmm-4.0" ]
+    forward_variables_from(invoker, "*", [ "gresources", "gresources_compile_mode", "gresources_ui", "packages", "target_type" ])
+    #configs += [ "//build/config/posix/pkg-config:gtkmm-4.0" ]
+    if (defined(invoker.packages)) {
+      foreach(package, invoker.packages) {
+        configs += [ ":" + package ]
+      }
+    }
     if (!defined(deps)) {
       deps = []
     }

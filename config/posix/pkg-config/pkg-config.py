@@ -8,6 +8,7 @@ def main():
   pkg_name = sys.argv[1]
   command = [ "pkg-config", "--libs", "--cflags", pkg_name]
   result = subprocess.run(command, capture_output=True, text=True)
+  error = result.stderr
   flags = result.stdout.split()
   cflags = []
   libs = []
@@ -20,7 +21,8 @@ def main():
 
   result = json.dumps({ 
     "cflags": cflags, 
-    "libs": libs
+    "libs": libs,
+    "error": error
   })
   print(result)
 
