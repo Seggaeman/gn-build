@@ -33,7 +33,7 @@ template("gtk_target") {
       if (defined(invoker.gresources_ui)) {
         inputs = invoker.gresources_ui
       }
-      #depfile = "$target_gen_dir/{{source_target_relative}}.d"
+
       script = "//build/toolchain/posix/gtk/gresources_compile.py"
       args = [ rebase_path("./"), "{{source_target_relative}}", rebase_path(target_gen_dir) ]
       outputs = [ "$target_gen_dir/{{source_target_relative}}.c" ]
@@ -56,12 +56,13 @@ template("gtk_target") {
 
   target(invoker.target_type, target_name) {
     forward_variables_from(invoker, "*", [ "gresources", "gresources_compile_mode", "gresources_ui", "packages", "target_type" ])
-    #configs += [ "//build/config/posix/pkg-config:gtkmm-4.0" ]
+
     if (defined(invoker.packages)) {
       foreach(package, invoker.packages) {
         configs += [ ":" + package ]
       }
     }
+
     if (!defined(deps)) {
       deps = []
     }
