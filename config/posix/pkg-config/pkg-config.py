@@ -12,16 +12,20 @@ def main():
   flags = result.stdout.split()
   cflags = []
   libs = []
+  lib_dirs = []
 
   for flag in flags:
     if flag.startswith("-l"):
       libs.append(flag[2:])
+    elif flag.startswith("-L"):
+      lib_dirs.append(flag[2:])
     else:
       cflags.append(flag)
 
   result = json.dumps({ 
     "cflags": cflags, 
     "libs": libs,
+    "lib_dirs": lib_dirs,
     "error": error
   })
   print(result)
