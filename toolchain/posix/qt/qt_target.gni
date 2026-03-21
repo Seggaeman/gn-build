@@ -1,0 +1,106 @@
+declare_args() {
+  moc_executable = "moc"
+  uic_executable = "uic"
+}
+
+template("qt_target") {
+  template_target_name = target_name
+
+  if(!defined(invoker.target_type)) {
+    invoker.target_type = "executable"
+  }
+
+  package_configs = []
+  if (defined(invoker.packages)) {
+    foreach(package, invoker.packages) {
+      config("${template_target_name}_${package}") {
+        cflags_and_libs = exec_script("//build/config/posix/pkg-config/pkg-config.py", [ package ], "json")
+        cflags = cflags_and_libs.cflags
+        #Prefer libs instead of ldflags if these must be passed to dependents
+        libs = cflags_and_libs.libs
+        lib_dirs = cflags_and_libs.lib_dirs
+
+        if (len(cflags_and_libs.error) > 0) {
+          print(cflags_and_libs.error)
+          assert(len(cflags_and_libs.error) == 0)
+        }
+      }
+      package_configs += [ ":${template_target_name}_${package}" ]
+    }
+  }
+
+  has_ui = defined(invoker.ui) && len(invoker.ui) > 0
+
+  if (has_ui) {
+    action_foreach("${template_target_name}_uic_gen") {
+      script_executable = uic_executable
+      sources = invoker.ui
+      uic_file = "{{source_gen_dir}}/{{source_name_part}}-ui.h"
+      args = [ "{{source}}", "-o", uic_file ]
+      outputs = [ uic_file ]
+    }
+  }
+
+  has_moc = defined(invoker.moc_sources) && len(invoker.moc_sources) > 0
+  if (has_moc) {
+    config("${template_target_name}_moc_gen_includes") {
+      include_dirs = [ "./", target_gen_dir ]
+    }
+    action_foreach("${template_target_name}_moc_gen") {
+      if(has_ui) {
+        public_deps = [ ":${template_target_name}_uic_gen" ]
+      }
+      script_executable = moc_executable
+      sources = invoker.moc_sources
+      moc_file = "{{source_gen_dir}}/{{source_name_part}}-moc.cpp"
+      args = [ "{{source}}", "-o", moc_file ]
+      outputs = [ moc_file ]
+      public_configs = [ ":${template_target_name}_moc_gen_includes" ]
+    }
+  }
+
+  has_odb = defined(invoker.odb_sources) && len(invoker.odb_sources) > 0
+  if (has_odb) {
+    config("${template_target_name}_odb_includes") {
+      include_dirs = [ "./", target_gen_dir ]   
+    }
+
+    action_foreach("${template_target_name}_odb_compile") {
+      script_executable = "odb"
+      sources = invoker.odb_sources
+      args = []
+      if (defined(invoker.include_dirs)) {
+        foreach(include_dir, invoker.include_dirs) {
+          args += [ "-I", rebase_path(include_dir)]
+        }
+      }
+      args += [ "--database", "sqlite", "--generate-query", "--generate-schema", "--schema-format", "embedded", "--cxx-suffix", ".cpp", "--hxx-suffix", ".h", "--include-prefix", "{{source_dir_target_relative}}", "--ixx-suffix", ".i.h", "--std", "c++20", "--output-dir", rebase_path("{{source_gen_dir}}", "./"), "{{source}}" ]
+      public_configs = [ ":${template_target_name}_odb_includes" ]
+      outputs = [ "{{source_gen_dir}}/{{source_name_part}}-odb.cpp", "{{source_gen_dir}}/{{source_name_part}}-odb.h", "{{source_gen_dir}}/{{source_name_part}}-odb.i.h" ]
+    }  
+  }
+
+  # Could also have used template_target_name below. At this level both values are the same.
+  target(invoker.target_type, target_name) {
+    forward_variables_from(invoker, "*", [ "moc_sources", "packages", "target_type", "ui" ])
+
+    configs += package_configs
+
+    if (!defined(deps)) {
+      deps = []
+    }
+
+    if (!defined(sources)) {
+      sources = []
+    }
+
+    if (has_moc) {
+      deps += [ ":${template_target_name}_moc_gen" ]
+      sources += invoker.moc_sources + get_target_outputs(":${template_target_name}_moc_gen")
+    }
+
+    if (has_ui) {
+      sources += get_target_outputs(":${template_target_name}_uic_gen")
+    }     
+  }
+}
