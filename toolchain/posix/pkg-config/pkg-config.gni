@@ -1,0 +1,39 @@
+template("pkg_config_target") {
+  template_target_name = target_name
+
+  package_configs = []
+  if (defined(invoker.packages)) {
+    foreach(package, invoker.packages) {
+      config("${template_target_name}_${package}") {
+        cflags_and_libs = exec_script("//build/config/posix/pkg-config/pkg-config.py", [ package ], "json")
+        cflags = cflags_and_libs.cflags
+        #Prefer libs instead of ldflags if these must be passed to dependents
+        libs = cflags_and_libs.libs
+        lib_dirs = cflags_and_libs.lib_dirs
+
+        if (len(cflags_and_libs.error) > 0) {
+          print(cflags_and_libs.error)
+          assert(len(cflags_and_libs.error) == 0)
+        }
+      }
+      package_configs += [ ":${template_target_name}_${package}" ]
+    }
+  }
+
+  # Could also have used target_name below. At this level both values are the same.
+  target(invoker.target_type, template_target_name) {
+    forward_variables_from(invoker, "*")
+
+    if (defined(package_inheritance) && package_inheritance) {
+      if (!defined(public_configs)) {
+        public_configs = []
+      }
+      public_configs += package_configs
+    } else {
+      if (!defined(configs)) {
+        configs = []
+      }
+      configs += package_configs
+    }
+  }
+}

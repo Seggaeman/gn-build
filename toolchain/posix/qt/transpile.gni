@@ -1,0 +1,58 @@
+import("//build/toolchain/posix/pkg-config/pkg-config.gni")
+
+declare_args() {
+  moc_executable = "moc"
+  uic_executable = "uic"
+}
+
+template("ui_compile") {
+  template_target_name = target_name
+
+  config("${template_target_name}_public_config") {
+    include_dirs = [ target_gen_dir ]
+  }
+
+  action_foreach(template_target_name) {
+    script_executable = uic_executable
+    sources = invoker.sources
+    uic_file = "{{source_gen_dir}}/{{source_name_part}}-ui.h"
+    args = [ "{{source}}", "-o", uic_file ]
+    outputs = [ uic_file ]
+    public_configs = [ ":${template_target_name}_public_config" ]
+  }
+}
+
+template("moc_compile") {
+  template_target_name = target_name
+
+  config("${template_target_name}_public_config") {
+    if (is_posix) {
+      cflags = [ "-Wno-sfinae-incomplete" ] # Disable SFINAE related warning when linking moc file.
+    }
+  }
+
+  action_foreach("${template_target_name}_moc_gen") {
+    script_executable = moc_executable
+    sources = invoker.sources
+    moc_file = "{{source_gen_dir}}/{{source_name_part}}-moc.cpp"
+    args = [ "{{source}}", "-o", moc_file ]
+    outputs = [ moc_file ]
+  }
+
+
+  pkg_config_target(template_target_name) {
+    forward_variables_from(invoker, "*", [ "sources" ] )
+    if (!defined(deps)) {
+      deps = []
+    }
+    if (!defined(public_configs)) {
+      public_configs = []
+    }
+    public_configs += [ ":${template_target_name}_public_config" ]
+
+    deps += [ ":${template_target_name}_moc_gen" ]
+    sources = get_target_outputs(":${template_target_name}_moc_gen")
+    
+    target_type = "source_set"
+  }
+}
